@@ -5,134 +5,101 @@
 using namespace std;
 
 template<typename C>
-class Poly {
+class Poly : public vector<C> {
 public:
-	vector<C> p;
-	Poly();
-	Poly(C c);
-	Poly(const vector<C>& p_);
+	using vector<C>::vector;
 	void clearLeadingZeros();
-	int size() const;
-	C& back();
-	C back() const;
-	C& operator[](int ind);
-	C operator[](int ind) const;
-	void operator+=(const Poly<C>& other);
-	void operator-=(const Poly<C>& other);
-	void operator*=(const Poly<C>& other);
-	void operator/=(const Poly<C>& other);
-	void operator%=(const Poly<C>& other);
-	Poly<C> operator+(const Poly<C>& other) const;
-	Poly<C> operator-(const Poly<C>& other) const;
-	Poly<C> operator*(const Poly<C>& other) const;
-	Poly<C> operator/(const Poly<C>& other) const;
-	Poly<C> operator%(const Poly<C>& other) const;
+	void addShift(int x);
 };
 template<typename C>
 ostream& operator<<(ostream& os, const Poly<C>& polynom);
 
-
-template<typename C>
-Poly<C>::Poly() {
-	p = {};
-}
-
-template<typename C>
-Poly<C>::Poly(C c) {
-	p = vector<C>{c};
-}
-
-template<typename C>
-Poly<C>::Poly(const vector<C>& p_) {
-	p = p_;
-}
-
 template<typename C>
 void Poly<C>::clearLeadingZeros() {
-	while (!p.empty() && p.back() == 0) {
-		p.pop_back();
+	while (!this->empty() && this->back() == 0) {
+		this->pop_back();
 	}
 }
 
 template<typename C>
-int Poly<C>::size() const {
-	return p.size();
-}
-
-template<typename C>
-C& Poly<C>::back() {
-	return p.back();
-}
-
-template<typename C>
-C Poly<C>::back() const {
-	return p.back();
-}
-
-template<typename C>
-C& Poly<C>::operator[](int ind) {
-	return p[ind];
-}
-
-template<typename C>
-C Poly<C>::operator[](int ind) const {
-	return p[ind];
-}
-
-template<typename C>
-void Poly<C>::operator+=(const Poly<C>& other) {
-	p.resize(max(size(), other.size()));
-	for (int i = 0; i < other.size(); i++) {
-		p[i] += other[i];
+void Poly<C>::addShift(int x) {
+	if (x >= 0) {
+		resize(this->size() + x);
+		for (int i = (int)this->size() - 1; i >= 0; i--) {
+			if (i >= x) {
+				*(this->begin() + i) = *(this->begin() + i - x);
+			} else {
+				*(this->begin() + i) = C();
+			}
+		}
+	} else {
+		if ((int)this->size() + x >= 0) {
+			*this = vector<C>(this->begin() - x, this->end());
+		} else {
+			this->clear();
+		}
 	}
-	clearLeadingZeros();
 }
 
 template<typename C>
-void Poly<C>::operator-=(const Poly<C>& other) {
-	p.resize(max(size(), other.size()));
-	for (int i = 0; i < other.size(); i++) {
-		p[i] -= other[i];
+Poly<C>& operator+=(Poly<C>& a, const Poly<C>& b) {
+	a.resize(max(a.size(), b.size()));
+	for (int i = 0; i < b.size(); i++) {
+		a[i] += b[i];
 	}
-	clearLeadingZeros();
+	a.clearLeadingZeros();
+	return a;
 }
 
 template<typename C>
-void Poly<C>::operator*=(const Poly<C>& other) {
-	*this = *this * other;
+Poly<C>& operator-=(Poly<C>& a, const Poly<C>& b) {
+	a.resize(max(a.size(), b.size()));
+	for (int i = 0; i < b.size(); i++) {
+		a[i] -= b[i];
+	}
+	a.clearLeadingZeros();
+	return a;
 }
 
 template<typename C>
-void Poly<C>::operator/=(const Poly<C>& other) {
-	*this = *this / other;
+Poly<C>& operator*=(Poly<C>& a, const Poly<C>& b) {
+	a = a * b;
+	return a;
 }
 
 template<typename C>
-void Poly<C>::operator%=(const Poly<C>& other) {
-	*this = *this % other;
+Poly<C>& operator/=(Poly<C>& a, const Poly<C>& b) {
+	a = a / b;
+	return a;
 }
 
 template<typename C>
-Poly<C> Poly<C>::operator+(const Poly<C>& other) const {
-	Poly<C> res = *this;
-	res += other;
+Poly<C>& operator%=(Poly<C>& a, const Poly<C>& b) {
+	a = a % b;
+	return a;
+}
+
+template<typename C>
+Poly<C> operator+(const Poly<C>& a, const Poly<C>& b) {
+	Poly<C> res = a;
+	res += b;
 	return res;
 }
 
 template<typename C>
-Poly<C> Poly<C>::operator-(const Poly<C>& other) const {
-	Poly<C> res = *this;
-	res -= other;
+Poly<C> operator-(const Poly<C>& a, const Poly<C>& b) {
+	Poly<C> res = a;
+	res -= b;
 	return res;
 }
 
 template<typename C>
-Poly<C> Poly<C>::operator*(const Poly<C>& other) const {
+Poly<C> operator*(const Poly<C>& a, const Poly<C>& b) {
 	Poly<C> res = Poly<C>();
-	res.p.resize(p.size() + other.size());
-	for (int i = 0; i < p.size(); i++) {
-		for (int j = 0; j < other.size(); j++) {
-			res[i + j] += p[i] * other[j];
+	res.resize(a.size() + b.size());
+	for (int i = 0; i < a.size(); i++) {
+		for (int j = 0; j < b.size(); j++) {
+			res[i + j] += a[i] * b[j];
 		}
 	}
 	res.clearLeadingZeros();
@@ -140,28 +107,29 @@ Poly<C> Poly<C>::operator*(const Poly<C>& other) const {
 }
 
 template<typename C>
-Poly<C> Poly<C>::operator/(const Poly<C>& other) const {
-	Poly<C> a = *this, res = Poly<C>();
-	vector<C> p(a.size() - other.size() + 1, C());
-	while (a.size() >= other.size()) {
-		p.resize(a.size() - other.size() + 1);
-		p.back() = a.back() / other.back();
-		a -= other * p;
-		res += p;
+Poly<C> operator/(const Poly<C>& a, const Poly<C>& b) {
+	assert(b.size() > 0);
+	int resSize = max(0, (int)a.size() - (int)b.size());
+	Poly<C> res(resSize), c = a;
+	while (c.size() >= b.size()) {
+		C k = c.back() / b.back();
+		assert(b.back() * k == c.back());
+		c -= (k * b).addShift(c.size() - b.size());
+		res[c.size() - b.size()] = k;
 	}
 	return res;
 }
 
 template<typename C>
-Poly<C> Poly<C>::operator%(const Poly<C>& other) const {
-	Poly<C> a = *this;
-	vector<C> p(a.size() - other.size() + 1, C());
-	while (a.size() >= other.size()) {
-		p.resize(a.size() - other.size() + 1);
-		p.back() = a.back() / other.back();
-		a -= other * p;
+Poly<C> operator%(const Poly<C>& a, const Poly<C>& b) {
+	assert(b.size() > 0);
+	Poly<C> c = a;
+	while (c.size() >= b.size()) {
+		C k = c.back() / b.back();
+		assert(b.back() * k == c.back());
+		c -= (k * b).addShift(c.size() - b.size());
 	}
-	return a;
+	return c;
 }
 
 template<typename C>
