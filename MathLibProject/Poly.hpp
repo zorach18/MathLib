@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <cassert>
 #include <vector>
 
 using namespace std;
@@ -10,35 +11,66 @@ public:
 	using vector<C>::vector;
 	void clearLeadingZeros();
 	void addShift(int x);
+	int degree();
 };
 template<typename C>
-ostream& operator<<(ostream& os, const Poly<C>& polynom);
+ostream& operator<<(ostream& os, Poly<C> polynom);
+
+template<typename C>
+Poly<C> operator+(const Poly<C>&, const Poly<C>&);
+template<typename C>
+Poly<C> operator-(const Poly<C>&, const Poly<C>&);
+template<typename C>
+Poly<C> operator*(const Poly<C>&, const Poly<C>&);
+template<typename C>
+Poly<C> operator/(const Poly<C>&, const Poly<C>&);
+template<typename C>
+Poly<C> operator%(const Poly<C>&, const Poly<C>&);
+template<typename C>
+Poly<C>& operator+=(Poly<C>&, const Poly<C>&);
+template<typename C>
+Poly<C>& operator-=(Poly<C>&, const Poly<C>&);
+template<typename C>
+Poly<C>& operator*=(Poly<C>&, const Poly<C>&);
+template<typename C>
+Poly<C>& operator/=(Poly<C>&, const Poly<C>&);
+template<typename C>
+Poly<C>& operator%=(Poly<C>&, const Poly<C>&);
 
 template<typename C>
 void Poly<C>::clearLeadingZeros() {
-	while (!this->empty() && this->back() == 0) {
-		this->pop_back();
+	while (!vector<C>::empty() && vector<C>::back() == C()) {
+		vector<C>::pop_back();
 	}
 }
 
 template<typename C>
 void Poly<C>::addShift(int x) {
 	if (x >= 0) {
-		resize(this->size() + x);
-		for (int i = (int)this->size() - 1; i >= 0; i--) {
+		vector<C>::resize(vector<C>::size() + x);
+		for (int i = (int)vector<C>::size() - 1; i >= 0; i--) {
 			if (i >= x) {
-				*(this->begin() + i) = *(this->begin() + i - x);
+				*(vector<C>::begin() + i) = *(vector<C>::begin() + i - x);
 			} else {
-				*(this->begin() + i) = C();
+				*(vector<C>::begin() + i) = C();
 			}
 		}
 	} else {
-		if ((int)this->size() + x >= 0) {
-			*this = vector<C>(this->begin() - x, this->end());
+		if ((int)vector<C>::size() + x >= 0) {
+			for (int i = 0; i < vector<C>::size() + x; i++) {
+				*(vector<C>::begin() + i) = *(vector<C>::begin() + i - x);
+			}
+			vector<C>::resize(vector<C>::size() + x);
 		} else {
-			this->clear();
+			vector<C>::clear();
 		}
 	}
+}
+
+template<typename C>
+int Poly<C>::degree() {
+	clearLeadingZeros();
+	return (int)vector<C>::size() - 1;
 }
 
 template<typename C>
@@ -107,33 +139,39 @@ Poly<C> operator*(const Poly<C>& a, const Poly<C>& b) {
 }
 
 template<typename C>
-Poly<C> operator/(const Poly<C>& a, const Poly<C>& b) {
+Poly<C> operator/(const Poly<C>& c, const Poly<C>& d) {
+	Poly<C> a = c, b = d, t;
 	assert(b.size() > 0);
-	int resSize = max(0, (int)a.size() - (int)b.size());
-	Poly<C> res(resSize), c = a;
-	while (c.size() >= b.size()) {
-		C k = c.back() / b.back();
-		assert(b.back() * k == c.back());
-		c -= (k * b).addShift(c.size() - b.size());
-		res[c.size() - b.size()] = k;
+	int resSize = max(0, (int)a.size() - (int)b.size() + 1);
+	Poly<C> res(resSize);
+	while (a.size() >= b.size()) {
+		C k = a.back() / b.back();
+		assert(b.back() * k == a.back());
+		res[a.size() - b.size()] = k;
+		t = Poly<C>{k} * b;
+		t.addShift(a.size() - b.size());
+		a -= t;
 	}
 	return res;
 }
 
 template<typename C>
-Poly<C> operator%(const Poly<C>& a, const Poly<C>& b) {
+Poly<C> operator%(const Poly<C>& c, const Poly<C>& d) {
+	Poly<C> a = c, b = d, t;
 	assert(b.size() > 0);
-	Poly<C> c = a;
-	while (c.size() >= b.size()) {
-		C k = c.back() / b.back();
-		assert(b.back() * k == c.back());
-		c -= (k * b).addShift(c.size() - b.size());
+	while (a.size() >= b.size()) {
+		C k = a.back() / b.back();
+		assert(b.back() * k == a.back());
+		t = Poly<C>{k} *b;
+		t.addShift(a.size() - b.size());
+		a -= t;
 	}
-	return c;
+	return a;
 }
 
 template<typename C>
-ostream& operator<<(ostream& os, const Poly<C>& polynom) {
+ostream& operator<<(ostream& os, Poly<C> polynom) {
+	polynom.clearLeadingZeros();
 	os << "{";
 	for (int i = 0; i < polynom.size(); i++) {
 		if (i > 0) {

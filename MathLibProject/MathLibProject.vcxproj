@@ -131,6 +131,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Module.hpp" />
     <ClInclude Include="Poly.hpp" />
   </ItemGroup>
   <ItemGroup>
